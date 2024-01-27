@@ -1,6 +1,5 @@
 import subprocess
 
-
 VERSION_CODE = '1.0.0'
 
 
@@ -22,6 +21,7 @@ def run_flet_pack():
     ]
 
     subprocess.run(command)
+
 
 if __name__ == '__main__':
     run_flet_pack()
