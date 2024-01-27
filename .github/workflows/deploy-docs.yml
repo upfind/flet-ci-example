@@ -1,0 +1,51 @@
+name: Build and Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 检出代码仓库
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # 安装依赖
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      # 构建应用程序
+      - name: Build application
+        run: |
+          pyinstaller --onefile your_script.py
+
+      # 打包为不同平台的应用程序
+      - name: Package for Windows
+        run: |
+          pyinstaller --onefile --add-binary 'path-to-icon.ico;.' --icon 'path-to-icon.ico' your_script.py
+
+      - name: Package for macOS
+        run: |
+          pyinstaller --onefile --add-binary 'path-to-icon.icns:.' --icon 'path-to-icon.icns' your_script.py
+
+      - name: Package for Linux
+        run: |
+          pyinstaller --onefile --add-data 'path-to-icon.png:.' --icon 'path-to-icon.png' your_script.py
+
+      # 上传构建产物
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: dist/
