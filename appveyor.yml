@@ -8,7 +8,7 @@ stack: python 3.10
 
 environment:
   GITHUB_TOKEN:
-    secure: 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
+    secure: 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
 #    secure: Ti46nPnZgFh0nRteU6ma0EhJnCTW7PaMn9hnnewZl4gBFPyRQnXNCwGog02+MRLX
 
 install:
