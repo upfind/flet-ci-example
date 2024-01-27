@@ -1,4 +1,4 @@
-name: Build and Package
+name: Build and Release
 
 on:
   push:
@@ -6,9 +6,8 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  build_and_release_macos:
+    runs-on: macos-latest
     steps:
       # 检出代码仓库
       - name: Checkout repository
@@ -20,32 +19,90 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      # 安装 pyinstaller
+      - name: Install requirements
+        run: pip install -r requirements.txt
 
       # 构建应用程序
       - name: Build application
         run: |
           python pack_shell.py
 
-      # 打包为不同平台的应用程序
-      - name: Package for Windows
-        run: |
-          python pack_shell.py
-
-      - name: Package for macOS
-        run: |
-          python pack_shell.py
-
-      - name: Package for Linux
-        run: |
-          python pack_shell.py
+      # 创建 Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.0
+          release_name: Release v1.0.0
+          draft: false
+          prerelease: false
 
       # 上传构建产物
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: binaries
+          name: binaries_macos
           path: dist/
+
+      # 关联产物到 Release
+      - name: Associate artifacts to Release
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/your_app
+          asset_name: your_app
+          asset_content_type: application/octet-stream
+
+  build_and_release_windows:
+    runs-on: windows-latest
+    steps:
+      # 检出代码仓库
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # 安装依赖
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      # 安装 pyinstaller
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      # 构建应用程序
+      - name: Build application
+        run: |
+          python pack_shell.py
+
+      # 创建 Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.0
+          release_name: Release v1.0.0
+          draft: false
+          prerelease: false
+
+      # 上传构建产物
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: binaries_windows
+          path: dist/
+
+      # 关联产物到 Release
+      - name: Associate artifacts to Release
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: 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
