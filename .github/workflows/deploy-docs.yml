@@ -28,20 +28,20 @@ jobs:
       # 构建应用程序
       - name: Build application
         run: |
-          pyinstaller --onefile your_script.py
+          python pack_shell.py
 
       # 打包为不同平台的应用程序
       - name: Package for Windows
         run: |
-          pytyhon pack_shell.py
+          python pack_shell.py
 
       - name: Package for macOS
         run: |
-          pytyhon pack_shell.py
+          python pack_shell.py
 
       - name: Package for Linux
         run: |
-          pytyhon pack_shell.py
+          python pack_shell.py
 
       # 上传构建产物
       - name: Upload artifacts
