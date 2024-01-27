@@ -33,15 +33,15 @@ jobs:
       # 打包为不同平台的应用程序
       - name: Package for Windows
         run: |
-          pyinstaller --onefile --add-binary 'path-to-icon.ico;.' --icon 'path-to-icon.ico' your_script.py
+          pytyhon pack_shell.py
 
       - name: Package for macOS
         run: |
-          pyinstaller --onefile --add-binary 'path-to-icon.icns:.' --icon 'path-to-icon.icns' your_script.py
+          pytyhon pack_shell.py
 
       - name: Package for Linux
         run: |
-          pyinstaller --onefile --add-data 'path-to-icon.png:.' --icon 'path-to-icon.png' your_script.py
+          pytyhon pack_shell.py
 
       # 上传构建产物
       - name: Upload artifacts
