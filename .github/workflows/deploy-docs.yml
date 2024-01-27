@@ -1,108 +1,71 @@
-name: Build and Release
+name: Build and Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore:
+      - "*"
+  pull_request:
+    branches-ignore:
+      - "*"
+  release:
+    types:
+      - created
+
+env:
+  GITHUB_TOKEN: ${{ secrets.FLET_TOKEN }}
 
 jobs:
-  build_and_release_macos:
-    runs-on: macos-latest
+  build_and_deploy:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
     steps:
-      # 检出代码仓库
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      # 安装依赖
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x
+          python-version: "3.10"
 
-      # 安装 pyinstaller
-      - name: Install requirements
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # 构建应用程序
-      - name: Build application
-        run: |
-          python pack_shell.py
+      - name: Build package
+        run: flet pack main.py --name counter --icon icon.png --product-name counter --product-version "1.2.3" --copyright "Copyright (c) 2022 YourCompany Inc."
 
-      # 创建 Release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v1.0.0
-          release_name: Release v1.0.0
-          draft: false
-          prerelease: false
+      - name: Archive artifacts
+        if: startsWith(matrix.os, 'windows')
+        run: 7z a counter-windows.zip ./dist/*.exe
+        working-directory: ${{ github.workspace }}
 
-      # 上传构建产物
+      - name: Archive artifacts
+        if: startsWith(matrix.os, 'macos')
+        run: tar -czvf counter-macos.tar.gz -C dist counter.app
+        working-directory: ${{ github.workspace }}
+
+      - name: Archive artifacts
+        if: startsWith(matrix.os, 'ubuntu')
+        run: tar -czvf counter-linux.tar.gz -C dist counter
+        working-directory: ${{ github.workspace }}
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: binaries_macos
-          path: dist/
+          name: ${{ matrix.os }}-package
+          path: |
+            counter-windows.zip
+            counter-macos.tar.gz
+            counter-linux.tar.gz
 
-      # 关联产物到 Release
-      - name: Associate artifacts to Release
-        id: upload_release_asset
-        uses: actions/upload-release-asset@v1
+      - name: Publish release
+        if: github.ref == 'refs/tags/v*'
         env:
           GITHUB_TOKEN: ${{ secrets.FLET_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/your_app
-          asset_name: your_app
-          asset_content_type: application/octet-stream
-
-  build_and_release_windows:
-    runs-on: windows-latest
-    steps:
-      # 检出代码仓库
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      # 安装依赖
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.x
-
-      # 安装 pyinstaller
-      - name: Install requirements
-        run: pip install -r requirements.txt
-
-      # 构建应用程序
-      - name: Build application
         run: |
-          python pack_shell.py
+          gh release create ${{ github.ref }} ${{ matrix.os }}-package \
+            --title "Release ${{ github.ref }}" \
+            --notes "Release ${{ github.ref }}"
 
-      # 创建 Release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.FLET_TOKEN }}
-        with:
-          tag_name: v1.0.0
-          release_name: Release v1.0.0
-          draft: false
-          prerelease: false
-
-      # 上传构建产物
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: binaries_windows
-          path: dist/
-
-      # 关联产物到 Release
-      - name: Associate artifacts to Release
-        id: upload_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN:${{ secrets.FLET_TOKEN }}
